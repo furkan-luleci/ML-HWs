@@ -68,6 +68,7 @@ confmatrixgnb=confusion_matrix(Y_true, Y_predgnb)
 knn = KNeighborsClassifier(n_neighbors=10)
 knn.fit(X_train, Y_train)
 Y_predkNN = knn.predict(X_test)
+#accuracy, precision, recall, and F1 score of the test result on our ground truth
 ClassreportkNN=classification_report(Y_true, Y_predkNN, target_names =target_names)
 confmatrixkNN=confusion_matrix(Y_true, Y_predkNN)
 
