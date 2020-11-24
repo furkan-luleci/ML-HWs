@@ -1,0 +1,367 @@
+#LOAD THE LIBRARY
+import random
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import cross_val_score
+import statistics as st
+from sklearn.metrics import mean_absolute_error
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.datasets import make_regression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn import svm
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn import linear_model
+from sklearn.linear_model import RidgeCV
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.kernel_ridge import KernelRidge
+from sklearn import linear_model
+from sklearn.linear_model import SGDRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn import datasets, linear_model
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import pandas as np
+
+
+#TO NOT GET RANDOM VALUES AT EVERY ITER
+random.seed(30)
+
+
+#LOAD DATA
+df = pd.read_csv("/Users/furka/Downloads/project.csv")
+
+
+#DROP THE UNNECESSARY COLUMN
+df=df.drop(['FileNames'], axis=1)
+
+
+#VISUALIZE THE DATA AND CHECK THE CORRELATION
+df[df['Weights']<299].sample(299).plot.scatter(x='IA', y='Weights')
+df[df['PixelIntensity']<299].sample(299).plot.scatter(x='PixelAmount', y='PixelIntensity')
+df[df['PixelIntensity']<299].sample(299).plot.scatter(x='Weights', y='PixelIntensity')
+
+
+
+#CHECK THE CORRELATIONS
+print("Correlation b/w IA and Weights: ",
+      df['IA'].corr(df['Weights'])) #No correlation
+print("Correlation b/w Pixel Intensity and Pixel Amounts: ",
+      df['PixelIntensity'].corr(df['PixelAmount'])) #Highly negative correlated
+print("Correlation b/w Pixel Intensity and Weights: ",
+      df['PixelIntensity'].corr(df['Weights'])) #No correlation
+print("Correlation b/w Pixel Amount and Weights: ",
+      df['PixelAmount'].corr(df['Weights'])) #No correlation
+
+
+#DROP THE NAN VALUES
+df=df.dropna(axis='rows')
+
+
+#DISSELECTING ONE OF THE FEATURES to not to confuse our model
+#since both do the same job
+df=df.drop(['PixelIntensity'], axis=1)
+
+
+#NORMALIZATION OF FEATURES
+df['IA']=(df['IA']-df['IA'].min())/(df['IA'].max()-df['IA'].min())
+df['PixelAmount']=(df['PixelAmount']-df['PixelAmount'].min())/(df['PixelAmount'].max()-df['PixelAmount'].min())
+
+
+# SPLIT THE DATA (0.20 TEST, 0.80 TRAINING)
+train, test = train_test_split(df, test_size=0.2)
+
+
+#ML MODEL PREPARATIONS
+X_train= train.drop(columns=['Weights'])
+Y_train=train["Weights"] 
+X_test=test.drop(columns=['Weights']) #test data
+Y_test=test["Weights"] #Ground truths to evaluate the accuracy
+
+
+#ML MODEL BUILDING
+#Random Forest
+RF = RandomForestClassifier(criterion="entropy")
+RF.fit(X_train, Y_train)
+#Performance on training data
+Y_predRFtrain=RF.predict(X_train)
+accuracy_RF = cross_val_score(RF, X_train, Y_predRFtrain, scoring='accuracy', cv = 5)
+avgaccuracy_RFtrain=st.mean(accuracy_RF)
+MAE_RFtrain=mean_absolute_error(Y_train, Y_predRFtrain)
+MSE_RFtrain=mean_squared_error(Y_train, Y_predRFtrain)
+#Performance on testing data
+Y_predRFtest=RF.predict(X_test)
+accuracy_RF = cross_val_score(RF, X_test, Y_predRFtest, scoring='accuracy', cv = 5)
+avgaccuracy_RFtest=st.mean(accuracy_RF)
+MAE_RFtest=mean_absolute_error(Y_test, Y_predRFtest)
+MSE_RFtest=mean_squared_error(Y_test, Y_predRFtest)
+
+
+
+
+#KNN
+KNN = KNeighborsClassifier(n_neighbors = 8)
+KNN.fit(X_train, Y_train)
+#Performance on training data
+Y_predKNNtrain = KNN.predict(X_train)
+accuracy_KNN = cross_val_score(KNN, X_train, Y_predKNNtrain, scoring='accuracy', cv = 5)
+avgaccuracy_KNNtrain=st.mean(accuracy_KNN)
+MAE_KNNtrain=mean_absolute_error(Y_train, Y_predKNNtrain)
+MSE_KNNtrain=mean_squared_error(Y_train, Y_predKNNtrain)
+#Performance on testing data
+Y_predKNNtest=KNN.predict(X_test)
+accuracy_KNN = cross_val_score(KNN, X_test, Y_predKNNtest, scoring='accuracy', cv = 5)
+avgaccuracy_KNNtest=st.mean(accuracy_KNN)
+MAE_KNNtest=mean_absolute_error(Y_test, Y_predKNNtest)
+MSE_KNNtest=mean_squared_error(Y_test, Y_predKNNtest)
+
+
+
+#Stochastic Gradient Descent Regressor
+SGDReg = SGDRegressor(learning_rate='adaptive')
+SGDReg.fit(X_train, Y_train)
+#Performance on training data
+Y_predSGDRegtrain = SGDReg.predict(X_train)
+MAE_SGDRegtrain=mean_absolute_error(Y_train, Y_predSGDRegtrain)
+MSE_SGDRegtrain=mean_squared_error(Y_train, Y_predSGDRegtrain)
+#Performance on testing data
+Y_predSGDRegtest=SGDReg.predict(X_test)
+MAE_SGDRegtest=mean_absolute_error(Y_test, Y_predSGDRegtest)
+MSE_SGDRegtest=mean_squared_error(Y_test, Y_predSGDRegtest)
+
+
+
+
+#SVR
+SVR=svm.SVR()
+SVR.fit(X_train,Y_train)
+#Performance on training data
+Y_predSVRtrain=SVR.predict(X_train)
+MAE_SVRtrain=mean_absolute_error(Y_train, Y_predSVRtrain)
+MSE_SVRtrain=mean_squared_error(Y_train, Y_predSVRtrain)
+#Performance on testing data
+Y_predSVRtest=SVR.predict(X_test)
+MAE_SVRtest=mean_absolute_error(Y_test, Y_predSVRtest)
+MSE_SVRtest=mean_squared_error(Y_test, Y_predSVRtest)
+
+
+
+
+#KNNR
+#(a good way to choose nneighbors, k=sqrt(how many classes we have))
+KNNR = KNeighborsRegressor(n_neighbors = 8)
+KNNR.fit(X_train, Y_train)
+#Performance on training data
+Y_predKNNRtrain=KNNR.predict(X_train)
+MAE_KNNRtrain=mean_absolute_error(Y_train, Y_predKNNRtrain)
+MSE_KNNRtrain=mean_squared_error(Y_train, Y_predKNNRtrain)
+#Performance on testing data
+Y_predKNNRtest=KNNR.predict(X_test)
+MAE_KNNRtest=mean_absolute_error(Y_test, Y_predKNNRtest)
+MSE_KNNRtest=mean_squared_error(Y_test, Y_predKNNRtest)
+
+
+
+
+#Regression Trees
+RT = DecisionTreeRegressor()
+RT.fit(X_train, Y_train)
+#Performance on training data
+Y_predRTtrain=RT.predict(X_train)
+MAE_RTtrain=mean_absolute_error(Y_train, Y_predRTtrain)
+MSE_RTtrain=mean_squared_error(Y_train, Y_predRTtrain)
+#Performance on testing data
+Y_predRTtest=RT.predict(X_test)
+MAE_RTtest=mean_absolute_error(Y_test, Y_predRTtest)
+MSE_RTtest=mean_squared_error(Y_test, Y_predRTtest)
+
+
+
+
+#Random Forest Regressor
+RFReg = RandomForestRegressor(n_estimators=100, criterion='mae')
+RFReg.fit(X_train, Y_train)
+#Performance on training data
+Y_predRFRegtrain = RFReg.predict(X_train)
+MAE_RFRegtrain=mean_absolute_error(Y_train, Y_predRFRegtrain)
+MSE_RFRegtrain=mean_squared_error(Y_train, Y_predRFRegtrain)
+#Performance on testing data
+Y_predRFRegtest=RFReg.predict(X_test)
+MAE_RFRegtest=mean_absolute_error(Y_test, Y_predRFRegtest)
+MSE_RFRegtest=mean_squared_error(Y_test, Y_predRFRegtest)
+
+
+
+
+#AdaBoost Regressor
+AdaBoostReg = AdaBoostRegressor(n_estimators=100, loss='linear')
+AdaBoostReg.fit(X_train, Y_train)
+#Performance on training data
+Y_predAdaBoostRegtrain = AdaBoostReg.predict(X_train)
+MAE_AdaBoostRegtrain=mean_absolute_error(Y_train, Y_predAdaBoostRegtrain)
+MSE_AdaBoostRegtrain=mean_squared_error(Y_train, Y_predAdaBoostRegtrain)
+#Performance on testing data
+Y_predAdaBoostRegtest=AdaBoostReg.predict(X_test)
+MAE_AdaBoostRegtest=mean_absolute_error(Y_test, Y_predAdaBoostRegtest)
+MSE_AdaBoostRegtest=mean_squared_error(Y_test, Y_predAdaBoostRegtest)
+
+
+
+
+#MLPRegression
+MLPReg = MLPRegressor(learning_rate='adaptive', max_iter=1000)
+MLPReg.fit(X_train, Y_train)
+#Performance on training data
+Y_predMLPRegtrain=MLPReg.predict(X_train)
+MAE_MLPRegtrain=mean_absolute_error(Y_train, Y_predMLPRegtrain)
+MSE_MLPRegtrain=mean_squared_error(Y_train, Y_predMLPRegtrain)
+#Performance on testing data
+Y_predMLPRegtest=MLPReg.predict(X_test)
+MAE_MLPRegtest=mean_absolute_error(Y_test, Y_predMLPRegtest)
+MSE_MLPRegtest=mean_squared_error(Y_test, Y_predMLPRegtest)
+
+
+
+
+#Bayesian Ridge Regression
+BayesRidgeReg = linear_model.BayesianRidge()
+BayesRidgeReg.fit(X_train,Y_train)
+#Performance on training data
+Y_predBayesRidgeRegtrain=BayesRidgeReg.predict(X_train)
+MAE_BayesRidgeRegtrain=mean_absolute_error(Y_train, Y_predBayesRidgeRegtrain)
+MSE_BayesRidgeRegtrain=mean_squared_error(Y_train, Y_predBayesRidgeRegtrain)
+#Performance on testing data
+Y_predBayesRidgeRegtest=BayesRidgeReg.predict(X_test)
+MAE_BayesRidgeRegtest=mean_absolute_error(Y_test, Y_predBayesRidgeRegtest)
+MSE_BayesRidgeRegtest=mean_squared_error(Y_test, Y_predBayesRidgeRegtest)
+
+
+
+
+#RidgeCV
+RidgeCV = RidgeCV()
+RidgeCV.fit(X_train,Y_train)
+#Performance on training data
+Y_predRidgeCVtrain=RidgeCV.predict(X_train)
+MAE_RidgeCVtrain=mean_absolute_error(Y_train, Y_predRidgeCVtrain)
+MSE_RidgeCVtrain=mean_squared_error(Y_train, Y_predRidgeCVtrain)
+#Performance on testing data
+Y_predRidgeCVtest=RidgeCV.predict(X_test)
+MAE_RidgeCVtest=mean_absolute_error(Y_test, Y_predRidgeCVtest)
+MSE_RidgeCVtest=mean_squared_error(Y_test, Y_predRidgeCVtest)
+
+
+
+#ElasticNet
+ElasticNet = linear_model.ElasticNet()
+ElasticNet.fit(X_train,Y_train)
+#Performance on training data
+Y_predElasticNettrain=ElasticNet.predict(X_train)
+MAE_ElasticNettrain=mean_absolute_error(Y_train, Y_predElasticNettrain)
+MSE_ElasticNettrain=mean_squared_error(Y_train, Y_predElasticNettrain)
+#Performance on testing data
+Y_predElasticNettest=ElasticNet.predict(X_test)
+MAE_ElasticNettest=mean_absolute_error(Y_test, Y_predElasticNettest)
+MSE_ElasticNettest=mean_squared_error(Y_test, Y_predElasticNettest)
+
+
+
+#GaussianProcessRegression
+GaussianProcessReg =GaussianProcessRegressor()
+GaussianProcessReg.fit(X_train,Y_train)
+#Performance on training data
+Y_predGaussianProcessRegtrain=GaussianProcessReg.predict(X_train)
+MAE_GaussianProcessRegtrain=mean_absolute_error(Y_train, Y_predGaussianProcessRegtrain)
+MSE_GaussianProcessRegtrain=mean_squared_error(Y_train, Y_predGaussianProcessRegtrain)
+#Performance on testing data
+Y_predGaussianProcessRegtest=GaussianProcessReg.predict(X_test)
+MAE_GaussianProcessRegtest=mean_absolute_error(Y_test, Y_predGaussianProcessRegtest)
+MSE_GaussianProcessRegtest=mean_squared_error(Y_test, Y_predGaussianProcessRegtest)
+
+
+#List the model names, evaluation scores in the dataframe
+models_MAE = pd.DataFrame({
+    'Models': ['Support Vector Regression', 'KNNR', 'KNN',
+              'Regression Tree','Random Forest', 'SGDReg', 'RFReg',
+              'AdaBoostReg', 'MLPReg', 'BayesRidgeReg', 'RidgeCV','ElasticNet'
+              ,'GaussianProcessReg'],
+    'ScoreTrain': [MAE_SVRtrain, MAE_KNNRtrain, MAE_KNNtrain, MAE_RTtrain, MAE_RFtrain, 
+              MAE_SGDRegtrain, MAE_RFRegtrain,MAE_AdaBoostRegtrain, MAE_MLPRegtrain,
+              MAE_BayesRidgeRegtrain, MAE_RidgeCVtrain,MAE_ElasticNettrain,MAE_GaussianProcessRegtrain],
+    'ScoreTest': [MAE_SVRtest, MAE_KNNRtest, MAE_KNNtest, MAE_RTtest, MAE_RFtest, MAE_SGDRegtest,
+              MAE_RFRegtest, MAE_AdaBoostRegtest, MAE_MLPRegtest,
+              MAE_BayesRidgeRegtest, MAE_RidgeCVtest,MAE_ElasticNettest,MAE_GaussianProcessRegtest]})
+models_MAE.sort_values(by='ScoreTest', ascending=True)
+
+
+models_MSE = pd.DataFrame({
+    'Models': ['Support Vector Regression', 'KNNR', 'KNN',
+              'Random Forest','Regression Tree', 'SGDReg','RFReg',
+              'AdaBoostReg', 'MLPReg', 'BayesRidgeReg', 'RidgeCV','ElasticNet'
+              ,'GaussianProcessReg'],
+    'ScoreTrain': [MSE_SVRtrain, MSE_KNNRtrain, MSE_KNNtrain, MSE_RTtrain, MSE_RFtrain, 
+              MSE_SGDRegtrain, MSE_RFRegtrain,MSE_AdaBoostRegtrain, MSE_MLPRegtrain,
+              MSE_BayesRidgeRegtrain, MSE_RidgeCVtrain,MSE_ElasticNettrain,MSE_GaussianProcessRegtrain],
+    'ScoreTest': [MSE_SVRtest, MSE_KNNRtest, MSE_KNNtest, MSE_RTtest, MSE_RFtest, MSE_SGDRegtest,
+              MSE_RFRegtest, MSE_AdaBoostRegtest, MSE_MLPRegtrain,
+              MSE_BayesRidgeRegtest, MSE_RidgeCVtest,MSE_ElasticNettest,MSE_GaussianProcessRegtest]})
+models_MAE.sort_values(by='ScoreTest', ascending=True)
+
+
+predstest=[Y_predRFtest, Y_predSGDRegtest, Y_predSVRtest,Y_predKNNRtest, Y_predRTtest,
+       Y_predRFRegtest, Y_predAdaBoostRegtest, Y_predMLPRegtest, Y_predBayesRidgeRegtest,
+       Y_predRidgeCVtest,Y_predElasticNettest,Y_predGaussianProcessRegtest]
+model_names=["RandomForest", "SGDReg", "SVR", "KNNR", "RegressionTree", "RandomForestRegression",
+             "AdaBoostRegression","MLPRegression","BayesRidgeRegression","RidgeCV",
+             'ElasticNet','GaussianProcessRegression']
+
+predstrain=[Y_predRFtrain, Y_predSGDRegtrain, Y_predSVRtrain,Y_predKNNRtrain, Y_predRTtrain,
+       Y_predRFRegtrain, Y_predAdaBoostRegtrain, Y_predMLPRegtrain, Y_predBayesRidgeRegtrain,
+       Y_predRidgeCVtrain,Y_predElasticNettrain,Y_predGaussianProcessRegtrain]
+
+
+
+#Plot the train and test predictions
+for i in range(12):
+    
+    #Plot the models
+    y = Y_test
+    pred = predstest[i]
+    x = list(range(len(y)))
+    
+    fig = plt.figure()
+    fig.subplots_adjust(top=0.8)
+    ax1 = fig.add_subplot(111)
+    ax1.set_ylabel('Weights')
+    ax2 = fig.add_subplot(111)
+    ax1.set_xlabel('Number of Humans')
+    ax1.set_title(model_names[i])
+    plt.scatter(x, y, color="blue", label="original")
+    plt.plot(x, pred, color="red", label="predicted")
+    plt.legend()
+    plt.show() 
+
+for i in range(12):
+    
+    #Plot the models
+    y = Y_train
+    pred = predstrain[i]
+    x = list(range(len(y)))
+    
+    fig = plt.figure()
+    fig.subplots_adjust(top=0.8)
+    ax1 = fig.add_subplot(111)
+    ax1.set_ylabel('Weights')
+    ax2 = fig.add_subplot(111)
+    ax1.set_xlabel('Number of Humans')
+    ax1.set_title(model_names[i])
+    plt.scatter(x, y, color="blue", label="original")
+    plt.plot(x, pred, color="red", label="predicted")
+    plt.legend()
+    plt.show() 
+
+
