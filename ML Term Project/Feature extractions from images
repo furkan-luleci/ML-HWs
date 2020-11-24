@@ -1,0 +1,75 @@
+from scipy import stats
+import cv2
+from matplotlib import pyplot as plt
+from matplotlib import image
+from PIL import Image
+from IPython.display import display
+import numpy as np
+import os
+
+
+directory = '/Users/furka/Downloads/W8-300/depth'
+
+data_mode_pixel_intensity=[]
+data_mode_freqofpixel_intensity=[]
+data_pixel_amount=[]
+
+for file in os.listdir(directory):
+    path = os.path.join(directory, file)
+
+    #read the damn img
+    img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    
+    # dsize
+    dsize = (640, 480)
+    
+    # resize image
+    img = cv2.resize(img, dsize)
+    
+    #convert into gray
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    #show an example img
+    plt.imshow(img)
+    plt.show()
+                 
+    #show the histogram
+    hist = cv2.calcHist([img],[0],None,[256],[0,256])
+    plt.ylim(-1, 5000)
+    #plt.xlim(-1, 200) 
+    plt.plot(hist)
+    
+    #convert into an array and flatten it
+    data=np.asarray(img)
+    data=data.flatten()
+    data=np.delete(data, np.where(data == 255))
+    
+    #finding the area under the histogram
+    histarea = cv2.calcHist([data],[0],None,[256],[0,256])
+    values, bins, _ = plt.hist(data)
+    area = sum(np.diff(bins)*values)
+    
+    #TOTAL PIXEL AMOUNT OF THE DEPTH AREA
+    data_pixel_amountt=data.shape
+    data_pixel_amount.append(data_pixel_amountt)
+    
+    #FIND THE MODE OF INTENSITY OF THE DEPTH AREA
+    data_mode=np.median(data)    
+    data_mode_pixel_intensityy=data_mode
+    data_mode_pixel_intensity.append(data_mode_pixel_intensityy)
+    data_mode_freqofpixel_intensityy=data_mode
+    data_mode_freqofpixel_intensity.append(data_mode_freqofpixel_intensityy)
+    print('loops is done')
+
+#Export them into an csv file
+np.savetxt('data_mode_pixel_intensity.csv', data_mode_pixel_intensity, fmt='%.18e', delimiter=",")
+np.savetxt('data_mode_freqofpixel_intensity.csv', data_mode_freqofpixel_intensity, fmt='%.18e', delimiter=",")
+np.savetxt('data_pixel_amount.csv', data_pixel_amount, fmt='%.18e', delimiter=",")
+
+
+
+
+
+
+
+
